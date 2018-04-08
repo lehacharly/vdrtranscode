@@ -1,0 +1,67 @@
+#!/bin/sh
+### BEGIN INIT INFO
+# Provides:          vdrtranscode_server
+# Required-Start:    
+# Required-Stop:    
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Description:       enables vdr transcode from ts to h264
+### END INIT INFO
+
+vdr_user="vdr"
+binary="/usr/local/bin/vdrtranscode_server.pl"
+
+[ -x $binary ] || exit 0
+
+RETVAL=0
+
+start() {
+    echo -n "Starting vdrtranscode_server.pl : "
+    su $vdr_user -c "$binary -d -l"
+    $binary -d -l
+    sleep 1
+    PID=`cat /tmp/vdrtranscode_server.pid`
+    rm /tmp/vdrtranscode_server.pid
+    echo
+    echo $PID > /var/run/vdrtranscode_server.pid
+}
+
+stop() {
+    echo -n "Shutting down vdrtranscode_server.pl : "
+    LASTPID=`cat /var/run/vdrtranscode_server.pid`
+    kill $LASTPID
+    RETVAL=$?
+    echo
+    if [ $RETVAL -eq 0 ]; then
+    	rm -f /var/run/vdrtranscode_server.pid
+    fi
+}
+
+restart() {
+    echo -n "Restarting vdrtranscode_server.pl : "
+    stop
+    sleep 2
+    start
+}
+
+case "$1" in
+    start)
+    	start
+    ;;
+    stop)
+    	stop
+    ;;
+#    status)
+#        echo "Status vdrtranscode_server"
+#        ps -A | grep -q -w vdrtranscode.* && echo "...is running" || echo "...is not running"
+#    ;;
+    restart)
+    	restart
+    ;;
+    *)
+    	echo "Usage: $0 {start|stop|restart}"
+    ;;
+esac
+
+exit 0
+ 
